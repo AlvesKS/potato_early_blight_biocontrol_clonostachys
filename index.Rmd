@@ -8,7 +8,7 @@
 
 The research compendium with all files for reproducing the work and generating the figures, as well as this website, are available as an OSF project and can be cited as follows:
 
-Alves, K. S., & da Silva, H. A. O. (2020, February 10). Research Compendium: Control of tomato early blight with Clonostachys spp. and metabolites crude extract. https://doi.org/10.17605/OSF.IO/WDG5P
+Alves, K. S., & da Silva, H. A. O. (2020, February 10). Research Compendium: Biocontrol of Potato Early Blight with different Clonostachys spp. species. https://doi.org/10.17605/OSF.IO/F7VPB
 
 
 
