@@ -1,14 +1,12 @@
-% Introduction
+% About
 
-<img src = "figs/screeningbox.png" width = 350px align = right> In this website are available the codes used to reproduce the analysis and results of the research conducted by the master student Hiago Antonio O. da Silva under the supervision of Prof. Lucas Magalhães de Abreu at theUniversidade Federal de Vicosa, MG, Brazil.
+<img src = "figs/severity_sep.png" width = 450px align = right> In this website are available the codes used to reproduce the analysis and results of the research conducted by a D.sc student Hiago Antonio O da Silva under the supervision of Prof. Lucas M. de Abreu, Universidade Federal de Vicosa, MG, Brazil.
 
-  
+   
 
 ## Citation
-
-The research compendium with all files for reproducing the work and generating the figures, as well as this website, are available as an OSF project and can be cited as follows:
-
-Alves, K. S., & da Silva, H. A. O. (2020, February 10). Research Compendium: Biocontrol of Potato Early Blight with different Clonostachys spp. species. https://doi.org/10.17605/OSF.IO/F7VPB
+  Alves, K. S., & da Silva, H. A. O. (2020, February 10). Research Compendium: Biocontrol of Potato Early Blight with different Clonostachys spp. species. https://doi.org/10.17605/OSF.IO/F7VPB
+ 
 
 
 

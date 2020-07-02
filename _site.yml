@@ -1,4 +1,4 @@
-name: Data analysis
+name: potato_early_blight_biocontrol
 output_dir: docs
 output:
   html_document:
@@ -7,8 +7,8 @@ output:
     theme: cosmo 
     df_print: paged
     highlight: default
-    include:
-      after_body: footer.md
+    # include:
+    #   after_body: footer.md
     toc: yes
     toc_float:
       collapsed: no
@@ -18,7 +18,7 @@ output:
 bibliography: crossref.bib
 csl: chicago-author-date.csl
 navbar:
-  title: Clonostachys Potato Early Blight biocontrol
+  title: Biocontrol of Potato Early Blight with Clonostachys spp.
   left:
   - text: About
     icon: fa fa-home

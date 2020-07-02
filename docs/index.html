@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 
 
-<title>index.utf8.md</title>
+<title>About</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -96,7 +96,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -245,6 +244,7 @@ $(document).ready(function () {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -257,56 +257,12 @@ $(document).ready(function () {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 <style type="text/css">
 .code-folding-btn { margin-bottom: 4px; }
 </style>
-<script>
-$(document).ready(function () {
-  window.initializeSourceEmbed("index.Rmd");
-});
-</script>
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = false;
-    options.smoothScroll = false;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -320,6 +276,12 @@ $(document).ready(function ()  {
 }
 }
 
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
 
 .toc-content {
   padding-left: 30px;
@@ -355,8 +317,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -402,7 +362,7 @@ div.tocify {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">Clonostachys Potato Early Blight biocontrol</a>
+      <a class="navbar-brand" href="index.html">Biocontrol of Potato Early Blight with Clonostachys spp.</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
@@ -445,22 +405,18 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Introduction</h1>
+<h1 class="title toc-ignore">About</h1>
 
 </div>
 
 
-<p><img src = "figs/screeningbox.png" width = 350px align = right> In this website are available the codes used to reproduce the analysis and results of the research conducted by the master student Hiago Antonio O. da Silva under the supervision of Prof. Lucas Magalhães de Abreu at theUniversidade Federal de Vicosa, MG, Brazil.</p>
+<p><img src = "figs/severity_sep.png" width = 450px align = right> In this website are available the codes used to reproduce the analysis and results of the research conducted by a D.sc student Hiago Antonio O da Silva under the supervision of Prof. Lucas M. de Abreu, Universidade Federal de Vicosa, MG, Brazil.</p>
 <div id="citation" class="section level2">
 <h2>Citation</h2>
-<p>The research compendium with all files for reproducing the work and generating the figures, as well as this website, are available as an OSF project and can be cited as follows:</p>
 <p>Alves, K. S., &amp; da Silva, H. A. O. (2020, February 10). Research Compendium: Biocontrol of Potato Early Blight with different Clonostachys spp. species. <a href="https://doi.org/10.17605/OSF.IO/F7VPB" class="uri">https://doi.org/10.17605/OSF.IO/F7VPB</a></p>
 </div>
 
-<div id="rmd-source-code">JSBJbnRyb2R1Y3Rpb24NCg0KPGltZyBzcmMgPSAiZmlncy9zY3JlZW5pbmdib3gucG5nIiB3aWR0aCA9IDM1MHB4IGFsaWduID0gcmlnaHQ+IEluIHRoaXMgd2Vic2l0ZSBhcmUgYXZhaWxhYmxlIHRoZSBjb2RlcyB1c2VkIHRvIHJlcHJvZHVjZSB0aGUgYW5hbHlzaXMgYW5kIHJlc3VsdHMgb2YgdGhlIHJlc2VhcmNoIGNvbmR1Y3RlZCBieSB0aGUgbWFzdGVyIHN0dWRlbnQgSGlhZ28gQW50b25pbyBPLiBkYSBTaWx2YSB1bmRlciB0aGUgc3VwZXJ2aXNpb24gb2YgUHJvZi4gTHVjYXMgTWFnYWxow6NlcyBkZSBBYnJldSBhdCB0aGVVbml2ZXJzaWRhZGUgRmVkZXJhbCBkZSBWaWNvc2EsIE1HLCBCcmF6aWwuDQoNCiAgDQoNCiMjIENpdGF0aW9uDQoNClRoZSByZXNlYXJjaCBjb21wZW5kaXVtIHdpdGggYWxsIGZpbGVzIGZvciByZXByb2R1Y2luZyB0aGUgd29yayBhbmQgZ2VuZXJhdGluZyB0aGUgZmlndXJlcywgYXMgd2VsbCBhcyB0aGlzIHdlYnNpdGUsIGFyZSBhdmFpbGFibGUgYXMgYW4gT1NGIHByb2plY3QgYW5kIGNhbiBiZSBjaXRlZCBhcyBmb2xsb3dzOg0KDQpBbHZlcywgSy4gUy4sICYgZGEgU2lsdmEsIEguIEEuIE8uICgyMDIwLCBGZWJydWFyeSAxMCkuIFJlc2VhcmNoIENvbXBlbmRpdW06IEJpb2NvbnRyb2wgb2YgUG90YXRvIEVhcmx5IEJsaWdodCB3aXRoIGRpZmZlcmVudCBDbG9ub3N0YWNoeXMgc3BwLiBzcGVjaWVzLiBodHRwczovL2RvaS5vcmcvMTAuMTc2MDUvT1NGLklPL0Y3VlBCDQoNCg0KDQo=</div>
-
-
-Copyright 2017 Emerson Del Ponte
+<div id="rmd-source-code">JSBBYm91dA0KDQo8aW1nIHNyYyA9ICJmaWdzL3NldmVyaXR5X3NlcC5wbmciIHdpZHRoID0gNDUwcHggYWxpZ24gPSByaWdodD4gSW4gdGhpcyB3ZWJzaXRlIGFyZSBhdmFpbGFibGUgdGhlIGNvZGVzIHVzZWQgdG8gcmVwcm9kdWNlIHRoZSBhbmFseXNpcyBhbmQgcmVzdWx0cyBvZiB0aGUgcmVzZWFyY2ggY29uZHVjdGVkIGJ5IGEgRC5zYyBzdHVkZW50IEhpYWdvIEFudG9uaW8gTyBkYSBTaWx2YSB1bmRlciB0aGUgc3VwZXJ2aXNpb24gb2YgUHJvZi4gTHVjYXMgTS4gZGUgQWJyZXUsIFVuaXZlcnNpZGFkZSBGZWRlcmFsIGRlIFZpY29zYSwgTUcsIEJyYXppbC4NCg0KICAgDQoNCiMjIENpdGF0aW9uDQogIEFsdmVzLCBLLiBTLiwgJiBkYSBTaWx2YSwgSC4gQS4gTy4gKDIwMjAsIEZlYnJ1YXJ5IDEwKS4gUmVzZWFyY2ggQ29tcGVuZGl1bTogQmlvY29udHJvbCBvZiBQb3RhdG8gRWFybHkgQmxpZ2h0IHdpdGggZGlmZmVyZW50IENsb25vc3RhY2h5cyBzcHAuIHNwZWNpZXMuIGh0dHBzOi8vZG9pLm9yZy8xMC4xNzYwNS9PU0YuSU8vRjdWUEINCiANCg0KDQoNCg==</div>
 
 
 </div>
@@ -479,6 +435,54 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("index.Rmd");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
