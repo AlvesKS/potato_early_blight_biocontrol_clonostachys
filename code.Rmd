@@ -14,6 +14,10 @@ library(cowplot)
 library(multcomp)
 library(glmmTMB)
 library(kableExtra)
+library(patchwork)
+```
+```{r}
+install.packages('TMB', type = 'source')
 ```
 
 # Screening trial
@@ -35,7 +39,7 @@ pre_data %>%
   mutate(selecao = case_when(tratamento %in% selecionados ~ "Selected",
                      !tratamento %in% selecionados ~ "Non-selected")) %>% 
   
-  mutate(tratamento = case_when(tratamento == "alter" ~ "Check",
+  mutate(tratamento = case_when(tratamento == "alter" ~ "Control",
                                 tratamento != "alter" ~ tratamento),
          time_dai =  as.factor(time_dai)) %>% 
   na.omit() %>%
@@ -57,12 +61,14 @@ pre_data %>%
   mutate(selecao = case_when(tratamento %in% selecionados ~ "Selected",
                      !tratamento %in% selecionados ~ "Non-selected")) %>% 
   
-  mutate(tratamento = case_when(tratamento == "alter" ~ "Check",
+  mutate(tratamento = case_when(tratamento == "alter" ~ "Control",
                                 tratamento != "alter" ~ tratamento)) %>%
   na.omit() %>% 
   group_by(codes, time_dai) %>% 
   summarise(median = median(sev,na.rm=T),
-            mean = mean(sev,na.rm=T))
+            mean = mean(sev,na.rm=T)) %>% 
+  filter(time_dai==5) %>% 
+  arrange(mean)
 ```
 
 ## Plot means and medians
@@ -75,8 +81,8 @@ pre_data %>%
   mutate(selecao = case_when(tratamento %in% selecionados ~ "Selected",
                      !tratamento %in% selecionados ~ "Nonselected")) %>% 
   
-  mutate(tratamento = case_when(tratamento == "alter" ~ "Check",
-                                tratamento != "alter" ~ tratamento),
+  mutate(codes = case_when(tratamento == "alter" ~ "Control",
+                                tratamento != "alter" ~ codes),
          time_dai =  as.factor(time_dai)) %>%
   na.omit() %>%
   ggplot()+
@@ -99,7 +105,7 @@ pre_data %>%
   scale_fill_manual(values= c("#3caea3", "#20639b"))+
   guides(shape = guide_legend(override.aes = list(size=3)))+
   labs(x= "",
-       y= "Severity (%)",
+       y= "Disease severity (%)",
        fill = "Days after inoc.", shape ="")+
   facet_grid(.~selecao, scales ="free_x",space = "free")+
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
@@ -108,6 +114,7 @@ pre_data %>%
         )
 
   ggsave("figs/screening.png", dpi = 600, height = 4, width = 10)
+  ggsave("figs/screening.pdf", dpi = 600, height = 4, width = 10)
 
 ```
 
@@ -117,16 +124,17 @@ pre_data %>%
 data_screening = pre_data %>%
   mutate(selecao = case_when(tratamento %in% selecionados ~ "Selected",
                      !tratamento %in% selecionados ~ "Non-selected")) %>% 
-  mutate(tratamento = case_when(tratamento == "alter" ~ "Check",
+  mutate(tratamento = case_when(tratamento == "alter" ~ "Control",
                                 tratamento != "alter" ~ tratamento))%>%
   na.omit() %>% 
+  filter(time_dai==5) %>% 
   mutate(sev = case_when(sev == 0 ~ 0.001,
                          sev != 0 ~ sev))
 ```
 
 ```{r}
 scree_lm = lm(log(sev)~codes, data = data_screening)
-cld(emmeans(scree_lm, ~codes, transform = "response"), Letters = letters)
+as.data.frame(cld(emmeans(scree_lm, ~codes, transform = "response"), Letters = letters))
 plot(emmeans(scree_lm, ~codes, transform = "response"))
 ```
 
@@ -157,7 +165,6 @@ potato = potato_df %>%
                           trat == "CONT" ~"CONT",
                           trat == "FUNG" ~"FUNG"))
 head(potato)
-
 ```
 
 
@@ -172,25 +179,28 @@ sev_f = potato %>%
   group_by(study) %>% 
   filter(dai == max(dai)) %>% 
   filter( !is.na(sev)) %>% 
-  mutate(code = case_when(code == "CONT" ~ "CHECK",
+  mutate(code = case_when(code == "CONT" ~ "Control",
                           code != "CONT" ~ code)) %>% 
   mutate(sev = case_when(sev == 0 ~ 0.001,
                          sev > 0~ sev)) %>% 
   group_by(study, code,trat, rep) %>% 
-  summarise(sev = mean(sev))
+  summarise(sev = mean(sev)) 
 sev_f
 ```
 
 Here we change the name the trials (study) in the colunm
 
 ```{r}
+ordem_code = c("Control", "FUNG", "chloro 2", "rhiz 2","chloro 1", "pseud 2","rosea 2",
+"rhiz 1","roger 1","pseud 1","rosea 1")
 sev_final =  sev_f %>% 
   ungroup() %>% 
   mutate(study = case_when(study == 2 ~"First trial",
                               # study == 2 ~"Second trial",
                               study == 3 ~"Second trial"
                               # study == 5 ~"Third trial"
-                              ))
+                              )) %>% 
+  mutate(code = factor(code,levels = ordem_code))
 head(sev_final)
 ```
 
@@ -206,10 +216,190 @@ sev_final %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   labs(x="", y = "Final severity (%)")
 
-ggsave("figs/box.png", dpi = 600, height = 4, width = 7)
+ggsave("figs/box.pdf", dpi = 600, height = 4, width = 7)
 ```
 
-### Modelling final severity
+Data from spore concentration
+
+```{r}
+concentrat = gsheet2tbl("https://docs.google.com/spreadsheets/d/1SMCet9OEXwyLGnzmDGs2G1oDTdxamjcv1MkEg0v_B3U/edit?usp=sharing") %>% 
+  group_by(trial, isolate) %>% 
+  summarise(conc = mean(conc)) %>% 
+  rename(code =isolate) %>% 
+  mutate(trial = case_when(trial == 2 ~"First trial",
+                            # study == 2 ~"Second trial",
+                            trial == 3 ~"Second trial",
+                            trial == 1 ~"screening"
+                            )) %>% 
+  rename(study =trial) %>% 
+  filter(study != "screening")
+
+```
+
+### Effect of concentration on disease severity
+
+```{r}
+sev_final_conc = sev_final %>% 
+  dplyr::select(study,code,sev) %>% 
+  full_join(concentrat) %>%
+  replace_na(list(conc=0))
+
+```
+
+```{r}
+sev_final_conc %>% 
+  ggplot(aes(conc,sev, color = code))+
+  geom_point()+
+  geom_smooth(method ="lm", se =F)
+```
+
+```{r}
+lm_conc = lm(sev~conc, data = sev_final_conc %>% filter(study=="First trial"))
+summary(lm_conc)
+anova(lm_conc)
+```
+
+```{r}
+lm_conc = lm(sev~conc, data = sev_final_conc %>% filter(study=="Second trial"))
+summary(lm_conc)
+anova(lm_conc)
+```
+
+
+
+
+## First trial
+```{r}
+sev_final_1 = sev_final %>% 
+  dplyr::select(study,code,sev) %>% 
+  full_join(concentrat) %>% 
+  filter(study=="First trial") %>%
+  replace_na(list(conc=0)) %>% 
+  mutate(code = factor(code,levels = ordem_code))
+
+```
+
+### Model
+```{r}
+lm_f1 = lm(log(sev) ~ code, data = sev_final_1 )
+summary(lm_f1)
+```
+
+#### ANOVA
+```{r}
+Anova(lm_f1)
+```
+
+
+```{r}
+emms_f1 <-  emmeans(lm_f1, "code", type = "response")
+```
+
+#### Tukey
+
+
+```{r message=FALSE, warning=FALSE}
+cld(emms_f1, Letters = letters)
+```
+
+
+```{r}
+confi = confint(lm_f1)
+data.frame(emms_f1) %>% 
+  dplyr::select(code) %>% 
+  mutate(logC = as.matrix(summary(lm_f1)$coefficients[,1]),
+         se = round(as.matrix(summary(lm_f1)$coefficients[,2]),4),
+         P = round(as.matrix(summary(lm_f1)$coefficients[,4]),3),
+         mean = round((1-(exp(as.matrix(summary(lm_f1)$coefficients[,1]))))*100,2)) %>% 
+  mutate(CL = round((1-exp(confi[,2]))*100,2),
+         CU = round((1-exp(confi[,1]))*100,2)) %>% 
+  filter(code != "Control") %>% 
+  arrange(-mean)
+```
+
+## Second trial
+```{r}
+sev_final_2 = sev_final %>% 
+  dplyr::select(study,code,sev) %>% 
+  full_join(concentrat) %>% 
+  filter(study=="Second trial") %>%
+  replace_na(list(conc=0)) %>% 
+  mutate(code = factor(code,levels = ordem_code))
+
+```
+
+### Model
+```{r}
+lm_f2 = lm(log(sev) ~ code, data = sev_final_2 )
+summary(lm_f2)
+```
+#### ANOVA
+```{r}
+Anova(lm_f2)
+```
+
+
+```{r}
+emms_f2 <-  emmeans(lm_f2, "code", type = "response")
+```
+
+#### Tukey
+```{r message=FALSE, warning=FALSE}
+cld(emms_f2, Letters = letters)
+```
+
+
+```{r}
+confi = confint(lm_f2)
+data.frame(emms_f2) %>% 
+  dplyr::select(code) %>% 
+  mutate(logC = as.matrix(summary(lm_f2)$coefficients[,1]),
+         se = round(as.matrix(summary(lm_f2)$coefficients[,2]),4),
+         P = round(as.matrix(summary(lm_f2)$coefficients[,4]),3),
+         mean = round((1-(exp(as.matrix(summary(lm_f2)$coefficients[,1]))))*100,2)) %>% 
+  mutate(CL = round((1-exp(confi[,2]))*100,2),
+         CU = round((1-exp(confi[,1]))*100,2)) %>% 
+  filter(code != "Control") %>%  
+  arrange(-mean)
+```
+
+
+```{r}
+as.data.frame(emms_f1) %>% 
+  bind_rows(
+    as.data.frame(emms_f2),
+    .id = "trial") %>% 
+  mutate(study = case_when(trial == 1 ~"First trial",
+                              trial == 2 ~"Second trial")) %>% 
+  ggplot(aes(code,response, color=study))+
+  
+  geom_point(data = sev_final, 
+             aes(reorder(code,sev),sev, fill = study),
+             position = position_jitterdodge(jitter.width = 0.1,
+                                             dodge.width = 0.4),
+             color = "gray85")+
+  
+  geom_point(aes(code,response, color = study),
+             position = position_dodge(width = 0.4),
+             size = 3)+
+  
+  geom_errorbar(aes(code,ymin =lower.CL, ymax =upper.CL, color = study),
+                width=0,size = 1,
+                position = position_dodge(width = 0.4)) +
+  
+  scale_color_colorblind()+
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))+
+  coord_cartesian(ylim=c(0,100))+
+  theme_minimal_hgrid(font_size = 12)+
+  labs(x = "", y= "Disease severity (%)", color = "", fill = "")
+
+ggsave("figs/severity_sep.png", dpi = 600, height = 4, width = 7)
+ggsave("figs/severity_sep.pdf", dpi = 600, height = 4, width = 7)
+```
+
+
+
+## Modelling final severity
 
 ```{r}
 lm_sep12 = lmer(log(sev) ~ code*study +(1|study), data = sev_final )
@@ -230,6 +420,10 @@ emms_sep12
 #### Tukey mean comparison
 ```{r message=FALSE, warning=FALSE}
 cld(emms_sep12, Letters = letters)
+```
+
+```{r}
+cld(emmeans(lm_sep12, "study", by ="code"))
 ```
 
 #### Final severity plot
@@ -260,81 +454,53 @@ as.data.frame(emms_sep12) %>%
   theme_minimal_hgrid(font_size = 12)+
   labs(x = "", y= "Severity (%)", color = "", fill = "")
 
-ggsave("figs/severity_sep.png", dpi = 600, height = 4, width = 7)
+# ggsave("figs/severity_sep.png", dpi = 600, height = 4, width = 7)
+# ggsave("figs/severity_sep.pdf", dpi = 600, height = 4, width = 7)
 ```
 
-## Control efficacy
 
-### Model
-```{r}
-lme1 = lmer(log(sev) ~ code + (1|study), data = sev_f)
-summary(lme1)
-```
-
-ANOVA
-```{r}
-Anova(lme1)
-```
-
+# AACPD
 
 ```{r}
-emms <-  emmeans(lme1, "code", type = "response")
+# potato %>% 
+#   ggplot(aes(as.numeric(dai), sev, color = as.factor(study),linetype = as.factor(leaf), group = rep))+
+#   geom_point(position = position_dodge(0.5))+
+#   geom_line()+
+#   facet_wrap(study~code)
 ```
 
-#### Tukey
-```{r message=FALSE, warning=FALSE}
-cld(emms, Letters = letters)
-```
-
-
-####  Table
-```{r}
-confi = confint(lme1)[-c(1,2),]
-data.frame(emms) %>% 
-  dplyr::select(code) %>% 
-  mutate(logC = as.matrix(summary(lme1)$coefficients[,1]),
-         se = round(as.matrix(summary(lme1)$coefficients[,2]),4),
-         mean = round((1-(exp(as.matrix(summary(lme1)$coefficients[,1]))))*100,2)) %>% 
-  mutate(CL = round((1-exp(confi[,2]))*100,2),
-         CU = round((1-exp(confi[,1]))*100,2)) %>% 
-  filter(code != "CHECK") %>% 
-  kable()%>%
-  kable_styling()
-
-```
-
-### Plot
+Correlation between final sev and AUDPC
 
 ```{r}
-confi = confint(lme1)[-c(1,2),]
-data.frame(emms) %>% 
-   dplyr::select(code) %>% 
-  mutate(mean = 1-(exp(as.matrix(summary(lme1)$coefficients[,1])))) %>% 
-  mutate(CL = 1-exp(confi[,1]),
-         CU = 1-exp(confi[,2])) %>% 
-  filter(code != "CHECK") %>% 
-  ggplot(aes(reorder(code,mean), mean*100))+
+pf = potato %>% 
+    na.omit() %>%
+  group_by(study) %>% 
+  filter(dai==max(dai)) %>% 
+  group_by(trat, study, code) %>% 
+  summarise(sev = mean(sev))
 
-  geom_point(size = 3)+
-  geom_errorbar(aes(ymin =CU*100, ymax = CL*100 ), width = 0,
-                position = position_dodge(width = 0.2))+
-  scale_color_calc()+
+pauc = potato %>% 
+  na.omit() %>% 
+  group_by(trat,study,dai,rep,code) %>% 
+  summarise(sev = mean(sev)) %>% 
+  group_by(trat,study,rep,code) %>%
+  summarise(audpc = audpc(sev,dai)) %>% 
+  group_by(trat,study,code) %>% 
+  summarise(audpc = mean(audpc))
   
-  labs(x = "",
-       y ="Control efficacy (%)",
-       color ="")+
-  theme_minimal_hgrid()+
-  scale_x_discrete(guide = guide_axis(n.dodge = 2))+
-  theme(legend.position = "bottom")
 
-ggsave("figs/efficacy.png", dpi = 600, height = 4, width = 6)
+cor(pf$sev, pauc$audpc)
+plot(pf$sev, pauc$audpc)
 ```
+
 
 
 # Sporulation 
 
 
 ```{r}
+ordem_code2 = c("Control", "chloro 1","chloro 2", "pseud 1","pseud 2","rhiz 1","rhiz 2","roger 1", "rosea 1","rosea 2")
+
 alt_spor = gsheet2tbl("https://docs.google.com/spreadsheets/d/1h3ZZH9nx-nlmS4VKRXEOKq3cnxVa7gK1ExqZgyHqWm4/edit#gid=1690024692") %>% 
   filter(!trat %in% c("UCBVUCBV07+17","UCBV07+133","")) %>% 
   filter(study != 4) %>% 
@@ -349,14 +515,19 @@ alt_spor = gsheet2tbl("https://docs.google.com/spreadsheets/d/1h3ZZH9nx-nlmS4VKR
                           trat == "UCBV101" ~"roger 1",
                           trat == "UCBV97" ~"rosea 1",
                           trat == "UCBV133" ~"rosea 2",
-                          trat == "CHECK" ~"CHECK"))
+                          trat == "CHECK" ~"Control"))
 ```
+
+
 
 ```{r}
 alt_long = alt_spor%>% 
   gather(4:5, key = "state", value = "count") %>% 
-  separate(state, into = c("state", "fungi"), sep = "_") %>% 
-  mutate(state = factor(state, levels = c("Before drying", "After drying")))%>% 
+  separate(state, into = c("state", "fungi"), sep = "_") %>%
+  mutate(state = case_when(state=="Before drying"~"Fresh",
+                           state=="After drying"~"Dried")) %>% 
+  mutate(state = factor(state, levels = c("Fresh", "Dried")))%>%
+  # mutate(state = factor(state, levels = c("Before drying", "After drying")))%>% 
   mutate(count = round( ((count*100)/0.004)/1.9625 ),0 )
 
 alt_long
@@ -364,6 +535,7 @@ alt_long
 
 
 ```{r}
+
 clo_spor = gsheet2tbl("https://docs.google.com/spreadsheets/d/1h3ZZH9nx-nlmS4VKRXEOKq3cnxVa7gK1ExqZgyHqWm4/edit#gid=387958184")%>% 
   filter(!trat %in% c("133+7","7+17")) %>% 
   filter(study != 4)%>% 
@@ -376,14 +548,17 @@ clo_spor = gsheet2tbl("https://docs.google.com/spreadsheets/d/1h3ZZH9nx-nlmS4VKR
                           trat == "UCBV101" ~"roger 1",
                           trat == "UCBV97" ~"rosea 1",
                           trat == "UCBV133" ~"rosea 2",
-                          trat == "CHECK" ~"CHECK"))
+                          trat == "CHECK" ~"Control"))
 ```
 
 ```{r}
 clo_long = clo_spor%>% 
   gather(4:5, key = "state", value = "count") %>% 
   separate(state, into = c("state", "fungi"), sep = "_") %>% 
-  mutate(state = factor(state, levels = c("Before drying", "After drying"))) %>% 
+  mutate(state = case_when(state=="Before drying"~"Fresh",
+                           state=="After drying"~"Dried")) %>%
+  mutate(state = factor(state, levels = c("Fresh", "Dried")))%>% 
+  # mutate(state = factor(state, levels = c("Before drying", "After drying"))) %>% 
   mutate(count = round(((count*100)/0.00025)/1.9625) ,0)
 ```
 
@@ -393,17 +568,25 @@ clo_long = clo_spor%>%
 
 ```{r}
 full_long = alt_long %>% 
-  bind_rows(clo_long)
+  bind_rows(clo_long) %>% 
+  mutate(study = case_when(study == 2 ~"First trial",
+                              # study == 2 ~"Second trial",
+                              study == 3 ~"Second trial"
+                              # study == 5 ~"Third trial"
+                              ))
+  
 full_long
 ```
 
 
 
+
 ```{r}
 full_long %>% 
-  ggplot(aes(code, count))+
+  ggplot(aes(code, count, color = as.factor(study)))+
   geom_jitter(alpha = 0.2)+
-  geom_boxplot()+
+  # geom_boxplot()+
+  stat_summary()+
   facet_grid(fungi~state, scales = "free_y")+
   # scale_y_log10()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -411,12 +594,32 @@ full_long %>%
 
 ```
 
+# Effect of concentrations
+
+```{r}
+full_long_conc = full_long %>% 
+  full_join(concentrat) %>% 
+  replace_na(list(conc=0))
+
+```
+```{r}
+full_long_conc %>% 
+  ggplot(aes((conc),log(count+1)))+
+  geom_point(aes(color =state))+
+  geom_smooth(method = lm,aes(linetype=study))+
+  facet_wrap(~fungi, scales = "free")
+
+```
+
+
+
+
 ## Alternaria sporulation
 ```{r}
- glm1 = glmmTMB::glmmTMB(count ~ (code*state)+(1|study),
+ glm1 = glmmTMB::glmmTMB(count ~  code*state +(code|study),
               data = alt_long,
               ziformula=~1,
-              family=list(family="nbinom2",link="log")
+              family=list(family="nbinom1",link="log")
               )
 summary(glm1)
 
@@ -434,10 +637,16 @@ emms_spo_alt1 <-  emmeans(glm1, "code", by = "state",transform = "response")
 # pairs(emms_spo1)
 ```
 
+```{r}
+pairs(emms_spo_alt1)
+```
 
 ```{r}
-cld(emms_spo_alt1, Letters = letters)
+# cld(emms_spo_alt1, Letters = letters)
+as.data.frame(cld(emms_spo_alt1, Letters = letters))
 ```
+
+
 
 state dentro do trat
 
@@ -447,7 +656,7 @@ emms_spo_alt2 <-  emmeans(glm1, "state", by = "code",transform = "response")
 ```
 
 ```{r}
-cld(emms_spo_alt2, Letters = letters, reversed = T)
+as.data.frame(cld(emms_spo_alt2, Letters = letters, reversed = T))
 ```
 
 ```{r}
@@ -466,18 +675,21 @@ data.frame(emms_spo_alt2) %>%
   scale_color_calc()+
   labs(x = "State",
        y = "Sporulation")+
+  
   theme_bw()
 
 ```
 
 ## graph 1
 ```{r}
-alt_plot = data.frame(emms_spo_alt2) %>% 
+alt_plot = data.frame(emms_spo_alt2)%>% 
+  mutate(code = factor(code,levels = ordem_code2)) %>%
+  mutate(lower.CL = case_when(lower.CL<0 ~0,lower.CL>=0 ~lower.CL )) %>% 
   ggplot(aes(code, response*10^-4, group = state))+
-  
-  geom_point(data = alt_long, aes(code, count*10^-4, fill = state),
-             position = position_jitterdodge(dodge.width = 0.3, jitter.width = 0.1),
-             alpha = 0.3, color = "gray")+
+
+  # geom_point(data = alt_long, aes(code, count*10^-4, fill = state),
+  #            position = position_jitterdodge(dodge.width = 0.3, jitter.width = 0.1),
+  #            alpha = 0.3, color = "gray")+
   
   geom_errorbar(aes(ymin =lower.CL*10^-4, ymax = upper.CL*10^-4, color = state), width = 00,
                 position = position_dodge(width = 0.3), size =1)+
@@ -486,12 +698,15 @@ alt_plot = data.frame(emms_spo_alt2) %>%
   
   scale_color_calc()+
   scale_fill_calc()+
+  coord_cartesian(ylim=c(0,5))+
     scale_x_discrete(guide = guide_axis(n.dodge = 2))+
   labs(x = "",
+       title = "Alternaria grandis",
        y =expression(Conidia ~10^{4}/~cm^{2}),
        color ="")+
   theme_minimal_hgrid()+
-  theme(legend.position = "bottom")
+  theme(legend.position = "none",
+        plot.title = element_text(face = "italic", size =10))
 alt_plot
 # ggsave("figs/alt_esporulation.png", dpi = 600, height = 5, width = 7)
 ```
@@ -499,8 +714,8 @@ alt_plot
 
 # Clonostachys sporulation
 ```{r}
- glm2 = glmmTMB::glmmTMB(count ~ code*state + (1|study),
-                         family=list(family="nbinom2",link="log"),
+ glm2 = glmmTMB::glmmTMB(count ~ code*state + (code|study),
+                         family=list(family="nbinom1",link="log"),
                          ziformula = ~1,
                          data = clo_long)
 summary(glm2)
@@ -512,11 +727,16 @@ Anova(glm2)
 
 
 ```{r}
-emms_spo_clo1 <-  emmeans(glm2, by ="state",  "code", transform="response")
+emms_spo_clo1 <-  emmeans(glm2, "code",by ="state",   transform="response")
+```
+
+
+```{r}
+pairs(emms_spo_clo1)
 ```
 
 ```{r}
-cld(emms_spo_clo1, Letters = letters, reversed = T)
+as.data.frame(cld(emms_spo_clo1, Letters = letters))
 ```
 
 
@@ -528,7 +748,7 @@ emms_spo_clo2 <-  emmeans(glm2, "state", by = "code", transform="response")
 
 
 ```{r}
-cld(emms_spo_clo2, Letters = letters, reversed = T)
+as.data.frame(cld(emms_spo_clo2, Letters = letters, reversed = T))
 ```
 
 ```{r}
@@ -549,19 +769,21 @@ data.frame(emms_spo_clo2) %>%
 
 ```
 
+
 ## graph 2
 
 ```{r}
 clo_plot = data.frame(emms_spo_clo1) %>% 
   bind_rows(data.frame(emms_spo_alt2) %>% 
-              filter(code == "CHECK") %>% 
+              filter(code == "Control") %>% 
                dplyr::select(state,code)) %>% 
+  mutate(code = factor(code,levels = ordem_code2))%>% 
 
   ggplot(aes(code, response*10*10^-5,  group = state))+
   
-  geom_point(data = clo_long, aes(code, count*10*10^-5, fill = state),
-             position = position_jitterdodge(dodge.width = 0.3, jitter.width = 0.1),
-             alpha = 0.3, color = "gray")+
+  # geom_point(data = clo_long, aes(code, count*10*10^-5, fill = state),
+  #            position = position_jitterdodge(dodge.width = 0.3, jitter.width = 0.1),
+  #            alpha = 0.3, color = NA)+
   
   geom_errorbar(aes(ymin =lower.CL*10*10^-5, ymax = upper.CL*10*10^-5, color = state),
                 width = 0,
@@ -572,11 +794,14 @@ clo_plot = data.frame(emms_spo_clo1) %>%
   scale_color_calc()+
   scale_fill_calc()+
   scale_x_discrete(guide = guide_axis(n.dodge = 2))+
+  coord_cartesian(ylim = c(0,2000))+
   labs(x = "",
+       title = expression(paste(italic("Clonostachys")," spp.")),
        y =expression(Conidia~10^{4}/~cm^{2}),
        color ="", fill = "")+
   theme_minimal_hgrid()+
-  theme(legend.position = "bottom"
+  theme(legend.position = "bottom",
+        plot.title = element_text(face = "italic", size =10)
         # axis.text.x = element_text(angle = 45, hjust = 1)
         )
 clo_plot
@@ -586,13 +811,18 @@ clo_plot
 ```
 
 
-## combo
+## Combo
 ```{r}
-plot_grid(alt_plot+theme(legend.position = "none"),
-          clo_plot, 
-          labels = "auto",
-          nrow=2, rel_heights = c(1,.95))
+(alt_plot)/clo_plot+
+   plot_annotation(tag_levels ="a")&
+  theme()
 
-ggsave("figs/combo_spo.png", dpi = 600, height = 7, width = 6)
+ggsave("figs/combo_spo.png", dpi = 600, height = 7, width = 6.5)
+ggsave("figs/combo_spo.pdf", dpi = 600, height = 7, width = 6.5)
+
 ```
+
+
+
+
 

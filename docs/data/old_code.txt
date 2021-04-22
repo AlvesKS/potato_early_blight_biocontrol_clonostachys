@@ -1,0 +1,67 @@
+## Control efficacy
+
+### Model
+```{r}
+lme1 = lmer(log(sev) ~ code + (1|study), data = sev_f)
+summary(lme1)
+```
+
+ANOVA
+```{r}
+Anova(lme1)
+```
+
+
+```{r}
+emms <-  emmeans(lme1, "code", type = "response")
+```
+
+#### Tukey
+```{r message=FALSE, warning=FALSE}
+cld(emms, Letters = letters)
+```
+
+
+####  Table
+```{r}
+confi = confint(lme1)[-c(1,2),]
+data.frame(emms) %>% 
+  dplyr::select(code) %>% 
+  mutate(logC = as.matrix(summary(lme1)$coefficients[,1]),
+         se = round(as.matrix(summary(lme1)$coefficients[,2]),4),
+         mean = round((1-(exp(as.matrix(summary(lme1)$coefficients[,1]))))*100,2)) %>% 
+  mutate(CL = round((1-exp(confi[,2]))*100,2),
+         CU = round((1-exp(confi[,1]))*100,2)) %>% 
+  filter(code != "CHECK") %>% 
+  kable()%>%
+  kable_styling()
+
+```
+
+### Plot
+
+```{r}
+confi = confint(lme1)[-c(1,2),]
+data.frame(emms) %>% 
+   dplyr::select(code) %>% 
+  mutate(mean = 1-(exp(as.matrix(summary(lme1)$coefficients[,1])))) %>% 
+  mutate(CL = 1-exp(confi[,1]),
+         CU = 1-exp(confi[,2])) %>% 
+  filter(code != "CHECK") %>% 
+  ggplot(aes(reorder(code,mean), mean*100))+
+
+  geom_point(size = 3)+
+  geom_errorbar(aes(ymin =CU*100, ymax = CL*100 ), width = 0,
+                position = position_dodge(width = 0.2))+
+  scale_color_calc()+
+  
+  labs(x = "",
+       y ="Control efficacy (%)",
+       color ="")+
+  theme_minimal_hgrid()+
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))+
+  theme(legend.position = "bottom")
+
+ggsave("figs/efficacy.png", dpi = 600, height = 4, width = 6)
+ggsave("figs/efficacy.pdf", dpi = 600, height = 4, width = 6)
+```
